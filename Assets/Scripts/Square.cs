@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class Square
 {
@@ -8,6 +9,26 @@ public class Square
     List<int> tris = new List<int>();
 
     public Mesh mesh = new Mesh();
+    public int xLoc, zLoc;
+
+    public Vector3[] vertexLocations = new Vector3[4];
+
+    public Square(int xLoc, int zLoc)
+    {
+        this.xLoc = xLoc;
+        this.zLoc = zLoc;
+    }
+
+    public Square(Vector3[] pos, int x, int z)
+    {
+        vertexLocations[0] = pos[0];
+        vertexLocations[1] = pos[1];
+        vertexLocations[2] = pos[2];
+        vertexLocations[3] = pos[3];
+
+        xLoc = x;
+        zLoc = z;
+    }
 
     public Square(Vector3 position, bool flip)
     {
@@ -58,5 +79,13 @@ public class Square
 
         mesh.vertices = verts.ToArray();
         mesh.triangles = tris.ToArray();
+    }
+
+    public static Predicate<Square> ByLocation(int x, int z)
+    {
+        return delegate(Square square)
+        {
+            return square.xLoc == x && square.zLoc == z;
+        };
     }
 }
