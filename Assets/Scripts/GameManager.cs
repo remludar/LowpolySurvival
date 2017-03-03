@@ -4,6 +4,17 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour {
 
+    public float scale;
+    public float sampleX;
+    public float sampleZ;
+    public float xLoc;
+    public float zLoc;
+    float oldScale;
+    float oldSampleX;
+    float oldSampleZ;
+    float oldXLoc;
+    float oldZLoc;
+
     List<Vector3> verts = new List<Vector3>();
     List<int> tris = new List<int>();
     List<Vector2> uvs = new List<Vector2>();
@@ -20,9 +31,44 @@ public class GameManager : MonoBehaviour {
         meshRenderer = gameObject.AddComponent<MeshRenderer>();
         meshRenderer.sharedMaterial = Resources.Load("Materials/Grass") as Material;
 
+        scale = 3.5f;
+        sampleX = 5.9f;
+        sampleZ = 4.1f;
+        xLoc = 0;
+        zLoc = 0;
+
+        oldScale = scale;
+        oldSampleX = sampleX;
+        oldSampleZ = sampleZ;
+        oldXLoc = xLoc;
+        oldZLoc = zLoc;
+
         //_CreateAlternatingSeparateVertexMesh();
         _CreateAlternatingSeparateVertexMeshWithJitter();
 	}
+
+    void Update()
+    {
+        if (scale != oldScale || 
+            sampleX != oldSampleX || 
+            sampleZ != oldSampleZ || 
+            xLoc != oldXLoc ||
+            zLoc != oldZLoc)
+        {
+            mesh.Clear();
+            verts.Clear();
+            tris.Clear();
+            squares.Clear();
+            _CreateAlternatingSeparateVertexMeshWithJitter();
+            oldScale = scale;
+            oldSampleX = sampleX;
+            oldSampleZ = sampleZ;
+            oldXLoc = xLoc;
+            oldZLoc = zLoc;
+        }
+        //xLoc += 0.1f;
+        //zLoc += 0.1f;
+    }
 
     private void _CreateAlternatingSeparateVertexMesh()
     {
@@ -57,9 +103,8 @@ public class GameManager : MonoBehaviour {
 
     private void _CreateAlternatingSeparateVertexMeshWithJitter()
     {
-        int width = 33; 
-        int depth = 33;
-
+        int width = 32; 
+        int depth = 32;
 
         HeightMap.CreateHeightMap(width, depth);
         bool flip = false;
@@ -68,16 +113,17 @@ public class GameManager : MonoBehaviour {
         {
             for (int z = 0; z < depth; z++)
             {
-                float jitterX0 = Random.Range(0.0f, 0.5f);
-                float jitterX1 = Random.Range(0.0f, 0.5f);
-                float jitterX2 = Random.Range(0.5f, 1.0f);
-                float jitterX3 = Random.Range(0.5f, 1.0f);
+                float jitterX0 = 0;//Random.Range(0.0f, 0.5f);
+                float jitterX1 = 0;//Random.Range(0.0f, 0.5f);
+                float jitterX2 = 0;//Random.Range(0.5f, 1.0f);
+                float jitterX3 = 0;//Random.Range(0.5f, 1.0f);
 
-                float jitterZ0 = Random.Range(0.0f, 0.5f);
-                float jitterZ1 = Random.Range(0.5f, 1.0f);
-                float jitterZ2 = Random.Range(0.5f, 1.0f);
-                float jitterZ3 = Random.Range(0.0f, 0.5f);
-                
+                float jitterZ0 = 0;//Random.Range(0.0f, 0.5f);
+                float jitterZ1 = 0;//Random.Range(0.5f, 1.0f);
+                float jitterZ2 = 0;//Random.Range(0.5f, 1.0f);
+                float jitterZ3 = 0;//Random.Range(0.0f, 0.5f);
+
+                float perlinNoise = Mathf.PerlinNoise(((float)(x + xLoc) / (float)width) * sampleX, ((float)(z + zLoc) / (float)depth) * sampleZ) * scale;
 
                 Vector3[] vertexPositions = new Vector3[4];
 
@@ -98,10 +144,10 @@ public class GameManager : MonoBehaviour {
                     if (newZ2 > z + 1) newZ2 = z + 1;
                     var newZ3 = z + jitterZ3;
 
-                    vertexPositions[0] = new Vector3(newX0, Random.Range(0.0f, 0.4f), newZ0);
-                    vertexPositions[1] = new Vector3(newX1, Random.Range(0.0f, 0.4f), newZ1);
-                    vertexPositions[2] = new Vector3(newX2, Random.Range(0.0f, 0.4f), newZ2);
-                    vertexPositions[3] = new Vector3(newX3, Random.Range(0.0f, 0.4f), newZ3);
+                    vertexPositions[0] = new Vector3(newX0, perlinNoise, newZ0);
+                    vertexPositions[1] = new Vector3(newX1, perlinNoise, newZ1);
+                    vertexPositions[2] = new Vector3(newX2, perlinNoise, newZ2);
+                    vertexPositions[3] = new Vector3(newX3, perlinNoise, newZ3);
                 }
                 else if(x == 0) // squares on first column
                 {
@@ -116,8 +162,8 @@ public class GameManager : MonoBehaviour {
                     var newX3 = previousSquare.vertexLocations[2].x;
 
                     var newY0 = previousSquare.vertexLocations[1].y;
-                    var newY1 = Random.Range(0.0f, 0.4f);
-                    var newY2 = Random.Range(0.0f, 0.4f);
+                    var newY1 = perlinNoise;
+                    var newY2 = perlinNoise;
                     var newY3 = previousSquare.vertexLocations[2].y;
 
                     var newZ0 = previousSquare.vertexLocations[1].z;
@@ -144,8 +190,8 @@ public class GameManager : MonoBehaviour {
 
                     var newY0 = previousSquare.vertexLocations[3].y;
                     var newY1 = previousSquare.vertexLocations[2].y;
-                    var newY2 = Random.Range(0.0f, 0.4f);
-                    var newY3 = Random.Range(0.0f, 0.4f);
+                    var newY2 = perlinNoise;
+                    var newY3 = perlinNoise;
 
                     var newZ0 = previousSquare.vertexLocations[3].z;
                     var newZ1 = previousSquare.vertexLocations[2].z;
@@ -168,7 +214,7 @@ public class GameManager : MonoBehaviour {
 
                     var newY0 = previousSquare0.vertexLocations[1].y;
                     var newY1 = previousSquare1.vertexLocations[2].y;
-                    var newY2 = Random.Range(0.0f, 0.4f);
+                    var newY2 = perlinNoise;
                     var newY3 = previousSquare0.vertexLocations[2].y;
 
                     var newZ0 = previousSquare0.vertexLocations[1].z;
