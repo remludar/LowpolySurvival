@@ -9,15 +9,9 @@ public class GameManager : MonoBehaviour {
     public float sampleZ;
     public float xLoc;
     public float zLoc;
-    float oldScale;
-    float oldSampleX;
-    float oldSampleZ;
-    float oldXLoc;
-    float oldZLoc;
 
     List<Vector3> verts = new List<Vector3>();
     List<int> tris = new List<int>();
-    List<Vector2> uvs = new List<Vector2>();
     List<Square> squares = new List<Square>();
 
     MeshFilter meshFilter;
@@ -30,6 +24,7 @@ public class GameManager : MonoBehaviour {
         meshFilter = gameObject.AddComponent<MeshFilter>();
         meshRenderer = gameObject.AddComponent<MeshRenderer>();
         meshRenderer.sharedMaterial = Resources.Load("Materials/Grass") as Material;
+        mesh = meshFilter.mesh;
 
         scale = 3.5f;
         sampleX = 5.9f;
@@ -37,91 +32,43 @@ public class GameManager : MonoBehaviour {
         xLoc = 0;
         zLoc = 0;
 
-        oldScale = scale;
-        oldSampleX = sampleX;
-        oldSampleZ = sampleZ;
-        oldXLoc = xLoc;
-        oldZLoc = zLoc;
-
-        //_CreateAlternatingSeparateVertexMesh();
-        _CreateAlternatingSeparateVertexMeshWithJitter();
+        _CreateAlternatingSeparateVertexMeshNoJitterWithPerlin();
 	}
 
     void Update()
     {
-        if (scale != oldScale || 
-            sampleX != oldSampleX || 
-            sampleZ != oldSampleZ || 
-            xLoc != oldXLoc ||
-            zLoc != oldZLoc)
-        {
-            mesh.Clear();
-            verts.Clear();
-            tris.Clear();
-            squares.Clear();
-            _CreateAlternatingSeparateVertexMeshWithJitter();
-            oldScale = scale;
-            oldSampleX = sampleX;
-            oldSampleZ = sampleZ;
-            oldXLoc = xLoc;
-            oldZLoc = zLoc;
-        }
-        //xLoc += 0.1f;
-        //zLoc += 0.1f;
+        mesh.Clear();
+        verts.Clear();
+        tris.Clear();
+
+        _CreateAlternatingSeparateVertexMeshNoJitterWithPerlin();
+
+        xLoc += 0.05f;
+        zLoc += 0.05f;
     }
 
-    private void _CreateAlternatingSeparateVertexMesh()
-    {
-        int width = 33;
-        int depth = 33;
-
-        HeightMap.CreateHeightMap(width, depth);
-
-        bool flip = false;
-        var squares = new List<Square>();
-        for (int x = 0; x < width; x++)
-        {
-            for (int z = 0; z < depth; z++)
-            {
-                squares.Add(new Square(new Vector3(x, 0, z), flip));
-                flip = !flip;
-            }
-        }
-
-        CombineInstance[] combine = new CombineInstance[squares.Count];
-        for (int i = 0; i < combine.Length; i++)
-        {
-            combine[i].mesh = squares[i].mesh;
-            combine[i].transform = meshFilter.transform.localToWorldMatrix;
-        }
-
-        mesh = meshFilter.mesh;
-        mesh.CombineMeshes(combine);
-        mesh.RecalculateNormals();
-
-    }
 
     private void _CreateAlternatingSeparateVertexMeshWithJitter()
     {
         int width = 32; 
         int depth = 32;
 
-        HeightMap.CreateHeightMap(width, depth);
+        //HeightMap.CreateHeightMap(width, depth);
         bool flip = false;
         int triCount = 0;
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < depth; z++)
             {
-                float jitterX0 = 0;//Random.Range(0.0f, 0.5f);
-                float jitterX1 = 0;//Random.Range(0.0f, 0.5f);
-                float jitterX2 = 0;//Random.Range(0.5f, 1.0f);
-                float jitterX3 = 0;//Random.Range(0.5f, 1.0f);
+                float jitterX0 = Random.Range(0.0f, 0.5f);
+                float jitterX1 = Random.Range(0.0f, 0.5f);
+                float jitterX2 = Random.Range(0.5f, 1.0f);
+                float jitterX3 = Random.Range(0.5f, 1.0f);
 
-                float jitterZ0 = 0;//Random.Range(0.0f, 0.5f);
-                float jitterZ1 = 0;//Random.Range(0.5f, 1.0f);
-                float jitterZ2 = 0;//Random.Range(0.5f, 1.0f);
-                float jitterZ3 = 0;//Random.Range(0.0f, 0.5f);
+                float jitterZ0 = Random.Range(0.0f, 0.5f);
+                float jitterZ1 = Random.Range(0.5f, 1.0f);
+                float jitterZ2 = Random.Range(0.5f, 1.0f);
+                float jitterZ3 = Random.Range(0.0f, 0.5f);
 
                 float perlinNoise = Mathf.PerlinNoise(((float)(x + xLoc) / (float)width) * sampleX, ((float)(z + zLoc) / (float)depth) * sampleZ) * scale;
 
@@ -275,4 +222,128 @@ public class GameManager : MonoBehaviour {
         mesh.triangles = tris.ToArray();
         mesh.RecalculateNormals();
     }
+
+    private void _CreateAlternatingSeparateVertexMeshNoJitterWithPerlin()
+    {
+        int width = 32;
+        int depth = 32;
+
+        bool flip = false;
+        int triCount = 0;
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < depth; z++)
+            {
+                float perlinNoise =  Mathf.PerlinNoise(((float)(x + xLoc) / (float)width) * sampleX, ((float)(z + zLoc) / (float)depth) * sampleZ) * scale;
+
+                Vector3[] vertexPositions = new Vector3[4];
+
+                var newX0 = x;
+                var newX1 = x;
+                var newX2 = x + 1;
+                var newX3 = x + 1;
+
+                var newZ0 = z;
+                var newZ1 = z + 1;
+                var newZ2 = z + 1;
+                var newZ3 = z;
+
+                if (x == 0 && z == 0) // very first square
+                {
+                    vertexPositions[0] = new Vector3(newX0, perlinNoise, newZ0);
+                    vertexPositions[1] = new Vector3(newX1, perlinNoise, newZ1);
+                    vertexPositions[2] = new Vector3(newX2, perlinNoise, newZ2);
+                    vertexPositions[3] = new Vector3(newX3, perlinNoise, newZ3);
+                }
+                else if (x == 0) // squares on first column
+                {
+                    var previousSquare = squares[squares.Count - 1];
+
+                    var newY0 = previousSquare.vertexLocations[1].y;
+                    var newY1 = perlinNoise;
+                    var newY2 = perlinNoise;
+                    var newY3 = previousSquare.vertexLocations[2].y;
+
+                    vertexPositions[0] = new Vector3(newX0, newY0, newZ0);
+                    vertexPositions[1] = new Vector3(newX1, newY1, newZ1);
+                    vertexPositions[2] = new Vector3(newX2, newY2, newZ2);
+                    vertexPositions[3] = new Vector3(newX3, newY3, newZ3);
+                }
+                else if (z == 0) //squares on first row
+                {
+                    var previousSquare = squares.Find(Square.ByLocation(x - 1, z));
+
+                    var newY0 = previousSquare.vertexLocations[3].y;
+                    var newY1 = previousSquare.vertexLocations[2].y;
+                    var newY2 = perlinNoise;
+                    var newY3 = perlinNoise;
+
+                    vertexPositions[0] = new Vector3(newX0, newY0, newZ0);
+                    vertexPositions[1] = new Vector3(newX1, newY1, newZ1);
+                    vertexPositions[2] = new Vector3(newX2, newY2, newZ2);
+                    vertexPositions[3] = new Vector3(newX3, newY3, newZ3);
+                }
+                else // all other squares
+                {
+                    var previousSquare0 = squares[squares.Count - 1];
+                    var previousSquare1 = squares.Find(Square.ByLocation(x - 1, z));
+
+                    var newY0 = previousSquare0.vertexLocations[1].y;
+                    var newY1 = previousSquare1.vertexLocations[2].y;
+                    var newY2 = perlinNoise;
+                    var newY3 = previousSquare0.vertexLocations[2].y;
+
+                    vertexPositions[0] = new Vector3(newX0, newY0, newZ0);
+                    vertexPositions[1] = new Vector3(newX1, newY1, newZ1);
+                    vertexPositions[2] = new Vector3(newX2, newY2, newZ2);
+                    vertexPositions[3] = new Vector3(newX3, newY3, newZ3);
+                }
+                var square = new Square(vertexPositions, x, z);
+                squares.Add(square);
+
+                verts.Add(vertexPositions[0]);
+                verts.Add(vertexPositions[1]);
+                verts.Add(vertexPositions[2]);
+                verts.Add(vertexPositions[3]);
+
+                if (flip)
+                {
+                    verts.Add(vertexPositions[1]);
+                    verts.Add(vertexPositions[3]);
+                }
+                else
+                {
+                    verts.Add(vertexPositions[0]);
+                    verts.Add(vertexPositions[2]);
+                }
+
+                if (flip)
+                {
+                    tris.Add(triCount * 6 + 0);
+                    tris.Add(triCount * 6 + 1);
+                    tris.Add(triCount * 6 + 3);
+                    tris.Add(triCount * 6 + 5);
+                    tris.Add(triCount * 6 + 4);
+                    tris.Add(triCount * 6 + 2);
+                }
+                else
+                {
+                    tris.Add(triCount * 6 + 0);
+                    tris.Add(triCount * 6 + 1);
+                    tris.Add(triCount * 6 + 2);
+                    tris.Add(triCount * 6 + 5);
+                    tris.Add(triCount * 6 + 3);
+                    tris.Add(triCount * 6 + 4);
+                }
+                triCount++;
+                flip = !flip;
+            }
+        }
+
+        squares.Clear();
+        mesh.vertices = verts.ToArray();
+        mesh.triangles = tris.ToArray();
+        mesh.RecalculateNormals();
+    }
+
 }
