@@ -8,7 +8,7 @@ public class Square
 
     public int xLoc, zLoc;
 
-    public Vector3[] vertexLocations = new Vector3[4];
+    public Vector3[] vertexLocations = new Vector3[6];
 
     public Square(Vector3[] pos, int x, int z)
     {
@@ -16,6 +16,8 @@ public class Square
         vertexLocations[1] = pos[1];
         vertexLocations[2] = pos[2];
         vertexLocations[3] = pos[3];
+        vertexLocations[4] = pos[4];
+        vertexLocations[5] = pos[5];
 
         xLoc = x;
         zLoc = z;
