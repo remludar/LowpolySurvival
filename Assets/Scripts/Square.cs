@@ -12,16 +12,9 @@ public class Square
 
     public Square(Vector3[] pos, int x, int z, bool flipped)
     {
-        vertexLocations[0] = pos[0];
-        vertexLocations[1] = pos[1];
-        vertexLocations[2] = pos[2];
-        vertexLocations[3] = pos[3];
-        vertexLocations[4] = pos[4];
-        vertexLocations[5] = pos[5];
-
+        vertexLocations = pos;
         xLoc = x;
         zLoc = z;
-
         isFlipped = flipped;
     }
 
