@@ -7,10 +7,10 @@ public class Square
 {
 
     public int xLoc, zLoc;
-
     public Vector3[] vertexLocations = new Vector3[6];
+    public bool isFlipped;
 
-    public Square(Vector3[] pos, int x, int z)
+    public Square(Vector3[] pos, int x, int z, bool flipped)
     {
         vertexLocations[0] = pos[0];
         vertexLocations[1] = pos[1];
@@ -21,6 +21,8 @@ public class Square
 
         xLoc = x;
         zLoc = z;
+
+        isFlipped = flipped;
     }
 
 
